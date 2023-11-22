@@ -29,3 +29,7 @@ The following diagram shows the scenario.  An external attacker system (A) is ru
 From the attacker host (A) you can configure a browser to use the local Socks proxy on 127.0.0.1 port 1080.  You should now be able to access the protected web server (C) by going to `https://10.1.2.4`
 
 Any other protected service behind the firewall could be accessed through Socks tunnel as long as the tools on the attacking machine (A) support Socks or you have proxychains configured to use 127.0.0.1 port 1080.
+
+When you are finished and want to terminate the reverse proxy, issue the following command on the attacker host (A).
+
+`kill $(lsof -t -i:1080)`
